@@ -1,9 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useState } from 'react';
+import reactLogo from './assets/react.svg';
+import './App.css';
+import { useAuth0 } from "@auth0/auth0-react";
 
 function App() {
   const [count, setCount] = useState(0)
+
+    const { user, loginWithRedirect, isAuthenticated, logout, getAccessTokenSilently } =
+        useAuth0();
+
+    const showApiCall = () => {
+        getAccessTokenSilently().then((token) => {
+            console.log("token :", token)
+            fetch("http://localhost:8080/user", {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers' : '*'
+                },
+                method: "POST",
+                body: JSON.stringify(user),
+            })
+                .then((response) => response.json())
+                .then((data) => alert(data.message));
+        });
+    };
 
   return (
     <div className="App">
@@ -27,6 +48,20 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+        {isAuthenticated ? (
+            <>
+                <button
+                    onClick={() =>
+                        logout({ logoutParams: { returnTo: window.location.origin } })
+                    }
+                >
+                    logout
+                </button>
+                <button onClick={() => showApiCall()}>show api call</button>
+            </>
+        ) : (
+            <button onClick={() => loginWithRedirect()}>login</button>
+        )}
     </div>
   )
 }
